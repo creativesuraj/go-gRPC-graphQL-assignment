@@ -1,0 +1,11 @@
+# .gqlgen.yml example
+#
+# Refer to https://gqlgen.com/config/
+# for detailed .gqlgen.yml documentation.
+
+schema:
+  - gql/book.graphql
+exec:
+  filename: api/interface_gen.go
+model:
+  filename: models/models_gen.go
