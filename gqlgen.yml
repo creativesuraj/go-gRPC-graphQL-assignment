@@ -4,8 +4,8 @@
 # for detailed .gqlgen.yml documentation.
 
 schema:
-  - gql/book.graphql
+  - gql-server/gql/book.graphql
 exec:
-  filename: api/interface_gen.go
+  filename: gql-server/api/interface_gen.go
 model:
-  filename: models/models_gen.go
+  filename: gql-server/models/models_gen.go

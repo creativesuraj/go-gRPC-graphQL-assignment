@@ -3,7 +3,7 @@ package models
 import (
 	"context"
 
-	"github.com/aeon/grpc-server/utils"
+	"github.com/aeon/utils"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/aeon/gql-server/models"
-	pb "github.com/aeon/gql-server/protos/book"
-	"github.com/aeon/gql-server/utils"
+	pb "github.com/aeon/grpc-server/protos/book"
+	"github.com/aeon/utils"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
