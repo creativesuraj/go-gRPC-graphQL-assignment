@@ -5,6 +5,18 @@ your skills with gRPC, GraphQL, and Golang best practices.
 
 ## Installation
 
+###MacOS
+
+Install `GO`
+
+```bash
+  brew install go
+```
+
+###Download the go.mod dependencies
+
+Go to the project working directory and run 
+
 ```bash
   go mod download
 ```
@@ -16,7 +28,7 @@ Set the following environment variables for the grpc-server
 ```bash
   export DB_URI=
   export DB_NAME=
-  export GRPC_PORT=
+  export GRPC_SERVER_PORT=
 ```
 
 Set the following environment variables for the gql-server
@@ -30,7 +42,7 @@ Set the following environment variables for the gql-server
 
 Go inside `grpc-server` and run
 
-```
+```bash
   go run server.go
 ```
 
@@ -38,7 +50,7 @@ Go inside `grpc-server` and run
 
 Go inside `gql-server` and run
 
-```
+```bash
   go run server.go
 ```
 
