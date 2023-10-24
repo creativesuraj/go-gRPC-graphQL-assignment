@@ -5,7 +5,7 @@ your skills with gRPC, GraphQL, and Golang best practices.
 
 ## Installation
 
-###MacOS
+### MacOS
 
 Install `GO`
 
@@ -13,7 +13,7 @@ Install `GO`
   brew install go
 ```
 
-###Download the go.mod dependencies
+### Download the dependencies
 
 Go to the project working directory and run 
 
