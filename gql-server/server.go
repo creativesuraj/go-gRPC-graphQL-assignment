@@ -13,14 +13,14 @@ import (
 
 func main() {
 	gqlEnv := utils.LoadEnvConfig("GQL")
-	url := gqlEnv.GetString("SERVER_URL")
+	port := gqlEnv.GetString("SERVER_PORT")
 	srv := handler.NewDefaultServer(api.NewExecutableSchema(api.Config{Resolvers: &resolvers.Resolver{}}))
 
 	http.Handle("/play", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
-	if url != "" {
-		logrus.Infof("Listening to %s GraphQL server", url)
-		logrus.Fatal(http.ListenAndServe(url, nil))
+	if port != "" {
+		logrus.Infof("Listening to http://localhost:%s", port)
+		logrus.Fatal(http.ListenAndServe(":"+port, nil))
 	} else {
 		logrus.Fatal("Graphql server port is undefined")
 	}
