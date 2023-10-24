@@ -21,10 +21,10 @@ type BookHandlersServer struct {
 
 func (b *BookHandlersServer) GetBooks(ctx context.Context, id *wrapperspb.StringValue) (*pb.Books, error) {
 	book := &models.Book{}
-	dbConn, err := models.NewDBConnection(ctx, book.Collection())
+	dbConn := &models.DBConn{}
 
-	if err != nil {
-		logrus.Errorf("Error connecting to db: %s", err.Error())
+	if err := dbConn.NewConnection(ctx, book.Collection()); err != nil {
+		logrus.Errorf("GetBooks - Error connecting to db: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, internalServerError)
 	}
 
@@ -38,7 +38,7 @@ func (b *BookHandlersServer) GetBooks(ctx context.Context, id *wrapperspb.String
 		logrus.Infof("GetBooks - query to get all books")
 	}
 	books := make([]*models.Book, 0)
-	if err = dbConn.FindAllRecords(ctx, &books, &filter); err != nil {
+	if err := dbConn.FindAllRecords(ctx, &books, &filter); err != nil {
 		logrus.Errorf("GetBooks - Error getting books from the db: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, internalServerError)
 	}
@@ -65,10 +65,8 @@ func (b *BookHandlersServer) CreateBook(ctx context.Context, bookRequest *pb.Boo
 	}
 
 	book := &models.Book{}
-
-	dbConn, err := models.NewDBConnection(ctx, book.Collection())
-
-	if err != nil {
+	dbConn := &models.DBConn{}
+	if err := dbConn.NewConnection(ctx, book.Collection()); err != nil {
 		logrus.Errorf("CreateBook - Error connecting to db: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, internalServerError)
 	}
@@ -83,7 +81,7 @@ func (b *BookHandlersServer) CreateBook(ctx context.Context, bookRequest *pb.Boo
 		Isbn:    bookRequest.GetIsbn(),
 	}
 
-	if err = dbConn.InsertRecord(ctx, book); err != nil {
+	if err := dbConn.InsertRecord(ctx, book); err != nil {
 		logrus.Errorf("CreateBook - Error inserting a book: %s", err.Error())
 		return nil, err
 	}
@@ -115,9 +113,8 @@ func (b *BookHandlersServer) UpdateBook(ctx context.Context, updateBookRequest *
 
 	book := &models.Book{}
 
-	dbConn, err := models.NewDBConnection(ctx, book.Collection())
-
-	if err != nil {
+	dbConn := &models.DBConn{}
+	if err := dbConn.NewConnection(ctx, book.Collection()); err != nil {
 		logrus.Errorf("UpdateBook - Error connecting to db: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, internalServerError)
 	}
@@ -132,7 +129,7 @@ func (b *BookHandlersServer) UpdateBook(ctx context.Context, updateBookRequest *
 		"summary": updateBookRequest.BookRequest.GetSummary(),
 	}}}
 
-	if err = dbConn.UpdateRecord(ctx, filter, updateQuery); err != nil {
+	if err := dbConn.UpdateRecord(ctx, filter, updateQuery); err != nil {
 		logrus.Errorf("UpdateBook - Error updating book with id: %s, %s", updateBookRequest.GetId(), err.Error())
 		return nil, status.Errorf(codes.Internal, internalServerError)
 	}
@@ -154,19 +151,26 @@ func (b *BookHandlersServer) DeleteBook(ctx context.Context, id *wrapperspb.Stri
 
 	book := &models.Book{}
 
-	dbConn, err := models.NewDBConnection(ctx, book.Collection())
-	if err != nil {
-		logrus.Errorf("Error connecting to db: %s", err.Error())
+	dbConn := &models.DBConn{}
+	if err := dbConn.NewConnection(ctx, book.Collection()); err != nil {
+		logrus.Errorf("DeleteBook - Error connecting to db: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, internalServerError)
 	}
 
 	defer dbConn.Client.Disconnect(ctx)
-	if err = dbConn.DeleteRecord(ctx, id.GetValue()); err != nil {
+	isDeleted, err := dbConn.DeleteRecord(ctx, id.GetValue())
+	if err != nil {
 		logrus.Errorf("DeleteBook - Error deleting a book: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, internalServerError)
 	}
+	if isDeleted {
+		logrus.Infof("Deleted successfully: %s", id.GetValue())
+		return &wrapperspb.BoolValue{
+			Value: true,
+		}, nil
+	}
 
 	return &wrapperspb.BoolValue{
-		Value: true,
+		Value: false,
 	}, nil
 }

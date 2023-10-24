@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"errors"
 
 	"github.com/aeon/utils"
 	"github.com/sirupsen/logrus"
@@ -17,29 +18,32 @@ type DBConn struct {
 	Collection *mongo.Collection
 }
 
-type DBHandlers interface{}
-
-// NewMongoDBConnection creates a new MongoDB connection
-func NewDBConnection(ctx context.Context, collectionName string) (*DBConn, error) {
+// NewConnection creates a new MongoDB connection
+func (conn *DBConn) NewConnection(ctx context.Context, collection string) error {
 	dbEnv := utils.LoadEnvConfig("DB")
 	dbName := dbEnv.GetString("NAME")
 	dbURI := dbEnv.GetString("URI")
+
+	if dbURI == "" {
+		logrus.Error("env variable DB_URI is not set")
+		return errors.New("DB env is not configured")
+	}
+
+	if dbName == "" {
+		logrus.Error("env variable DB_NAME is not set")
+		return errors.New("DB env is not configured")
+	}
 
 	clientOptions := options.Client().ApplyURI(dbURI)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		logrus.Errorf("Error connecting to the database %s", err.Error())
-		return nil, err
+		return err
 	}
-
-	db := client.Database(dbName)
-	collection := db.Collection(collectionName)
-
-	return &DBConn{
-		Client:     client,
-		Database:   db,
-		Collection: collection,
-	}, nil
+	conn.Client = client
+	conn.Database = client.Database(dbName)
+	conn.Collection = conn.Database.Collection(collection)
+	return nil
 }
 
 func (conn *DBConn) InsertRecord(ctx context.Context, record interface{}) error {
@@ -62,18 +66,23 @@ func (conn *DBConn) UpdateRecord(ctx context.Context, filter interface{}, record
 	return nil
 }
 
-func (conn *DBConn) DeleteRecord(ctx context.Context, ID string) error {
+func (conn *DBConn) DeleteRecord(ctx context.Context, ID string) (bool, error) {
 	collection := conn.Collection
-	_, err := collection.DeleteOne(ctx, bson.M{"uuid": ID})
+	deletedResult, err := collection.DeleteOne(ctx, bson.M{"uuid": ID})
 	if err != nil {
 		logrus.Errorf("Error deleting a book with uuid: %s, err: %s", ID, err.Error())
-		return err
+		return false, err
 	}
-	return nil
+	if deletedResult.DeletedCount == 0 {
+		logrus.Infof("Record not found for ID: %s", ID)
+		return false, nil
+	}
+	return true, nil
 }
 
 func (conn *DBConn) FindAllRecords(ctx context.Context, records interface{}, filter interface{}) error {
 	collection := conn.Collection
+	logrus.Info(collection)
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
 		logrus.Errorf("Error finding books: %s", err.Error())
